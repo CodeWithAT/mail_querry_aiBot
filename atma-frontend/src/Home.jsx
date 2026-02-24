@@ -293,13 +293,12 @@ export default function Home() {
                <RobotHead isTyping={isTyping} isProcessing={isProcessing} />
             </Suspense>
             
-            {/* Fixed the extra bracket in this position array! */}
             <ContactShadows position={[0, -1.8, 0]} opacity={0.8} scale={15} blur={2.5} far={4} color="#00f2fe" />
           </Canvas>
         </div>
 
         {/* ─── UI OVERLAY ─── */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 40, pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyItems: 'flex-end', justifyContent: 'flex-end', paddingBottom: 40, pointerEvents: 'none' }}>
           <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} style={{ width: '100%', maxWidth: 750, padding: '0 30px', display: 'flex', flexDirection: 'column', gap: 16, pointerEvents: 'auto' }}>
             
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
