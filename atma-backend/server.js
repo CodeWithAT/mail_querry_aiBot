@@ -12,7 +12,6 @@ const app = express();
 const server = http.createServer(app);
 
 // 1. Setup CORS to allow your live Vercel frontend and local testing
-// Replace the Vercel URL with your actual deployment link if it changes
 const allowedOrigins = [
     "https://mail-querry-ai-bot-iits.vercel.app",
     "http://localhost:5173"
@@ -34,10 +33,9 @@ const io = new Server(server, {
 app.use(express.json());
 
 // 2. Initialize Gemini AI securely using Environment Variables
-// Ensure GEMINI_API_KEY is added to your Render Environment Variables
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// 3. Initialize Nodemailer (Gmail)
+// 3. Initialize Nodemailer (Gmail) - IPv6 BYPASS ADDED
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -48,7 +46,8 @@ const transporter = nodemailer.createTransport({
     },
     tls: {
         rejectUnauthorized: false // Helps prevent strict network blocks on free servers
-    }
+    },
+    family: 4 // 🔴 CRITICAL FIX: Forces IPv4 to bypass Render's network block
 });
 
 // Watch for the Atma Visualizer connection
@@ -69,8 +68,9 @@ app.post('/api/process', async (req, res) => {
 
         // --- NODE 1: AI SYNTHESIS ---
         io.emit('atma_status', 'ai_processing');
-        // Correcting model to "gemini-1.5-flash" (2.5-flash is not a standard model ID)
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
+        
+        // 🔴 CRITICAL FIX: Changed to "gemini-pro" to prevent 404 crashes
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" }); 
         const result = await model.generateContent(prompt);
         const aiResponse = result.response.text();
         console.log('✅ AI Synthesis Complete');
