@@ -65,7 +65,7 @@ app.post('/api/process', async (req, res) => {
         // --- NODE 1: AI SYNTHESIS ---
         io.emit('atma_status', 'ai_processing');
         // Correcting model to "gemini-1.5-flash" (2.5-flash is not a standard model ID)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
         const result = await model.generateContent(prompt);
         const aiResponse = result.response.text();
         console.log('✅ AI Synthesis Complete');
