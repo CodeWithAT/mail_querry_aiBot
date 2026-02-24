@@ -14,7 +14,7 @@ const server = http.createServer(app);
 // 1. Setup CORS to allow your live Vercel frontend and local testing
 // Replace the Vercel URL with your actual deployment link if it changes
 const allowedOrigins = [
-    "https://mail-querry-ai-bot.vercel.app", 
+    "https://mail-querry-ai-bot-iits.vercel.app",
     "http://localhost:5173"
 ];
 
