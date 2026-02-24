@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// 1. Setup CORS to allow your live Vercel frontend and local testing
+// 1. Setup CORS
 const allowedOrigins = [
     "https://mail-querry-ai-bot-iits.vercel.app",
     "http://localhost:5173"
@@ -32,30 +32,29 @@ const io = new Server(server, {
 
 app.use(express.json());
 
-// 2. Initialize Gemini AI securely using Environment Variables
+// 2. Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// 3. Initialize Nodemailer (Gmail) - IPv6 BYPASS ADDED
+// 3. Initialize Nodemailer (Gmail) - PORT 587 + IPv4 FIX
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Use SSL
+    port: 587,          // 🔴 FIXED: Now using 587
+    secure: false,      // 🔴 FIXED: Must be false for 587
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
     tls: {
-        rejectUnauthorized: false // Helps prevent strict network blocks on free servers
+        rejectUnauthorized: false 
     },
-    family: 4 // 🔴 CRITICAL FIX: Forces IPv4 to bypass Render's network block
+    family: 4           // 🔴 FIXED: Forces IPv4
 });
 
-// Watch for the Atma Visualizer connection
 io.on('connection', (socket) => {
     console.log('👁️ Core Atma Visualizer Connected:', socket.id);
 });
 
-// 4. The Main Processing Route
+// 4. Processing Route
 app.post('/api/process', async (req, res) => {
     const { prompt, email } = req.body;
 
@@ -66,20 +65,17 @@ app.post('/api/process', async (req, res) => {
     try {
         console.log(`\n🚀 New Request Initiated for: ${email}`);
 
-        // --- NODE 1: AI SYNTHESIS ---
         io.emit('atma_status', 'ai_processing');
         
-        // 🔴 CRITICAL FIX: Changed to "gemini-pro" to prevent 404 crashes
+        // 🔴 FIXED: Actually changed to gemini-pro
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
         const result = await model.generateContent(prompt);
         const aiResponse = result.response.text();
         console.log('✅ AI Synthesis Complete');
 
-        // --- CONNECTOR 1: TRANSFERRING ---
         io.emit('atma_status', 'ai_transfer');
         await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-        // --- NODE 2: SMTP RELAY ---
         io.emit('atma_status', 'email_processing');
         const mailOptions = {
             from: `"Neural Query Engine" <${process.env.EMAIL_USER}>`,
@@ -99,17 +95,12 @@ app.post('/api/process', async (req, res) => {
         await transporter.sendMail(mailOptions);
         console.log('✅ Email Successfully Relayed');
 
-        // --- CONNECTOR 2: TRANSFERRING ---
         io.emit('atma_status', 'email_transfer');
         await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-        // --- NODE 3: SUCCESS TRANSMISSION ---
         io.emit('atma_status', 'success');
-
-        // Reset visualizer after 5 seconds
         setTimeout(() => io.emit('atma_status', 'idle'), 5000);
 
-        // Send success back to the Home page
         res.status(200).json({ message: 'Process Complete' });
 
     } catch (error) {
@@ -119,7 +110,6 @@ app.post('/api/process', async (req, res) => {
     }
 });
 
-// Use Render's dynamic PORT or default to 5001
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
     console.log(`\n🟢 Server Online running on port ${PORT}`);
