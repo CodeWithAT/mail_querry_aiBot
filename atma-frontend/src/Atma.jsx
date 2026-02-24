@@ -32,7 +32,7 @@ function Atma() {
   const [status, setStatus] = useState('idle'); 
 
   useEffect(() => {
-    const socket = io('https://atma-backend.onrender.com');
+    const socket = io('https://mail-querry-aibot.onrender.com');
     socket.on('atma_status', (newStatus) => {
       setStatus(newStatus);
     });
