@@ -200,7 +200,7 @@ export default function Home() {
     if (!prompt || !email) return;
     setStatus('processing');
     try {
-      const res = await fetch('http://localhost:5001/api/process', {
+      const res = await fetch('https://atma-backend.onrender.com/api/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, email }),

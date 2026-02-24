@@ -32,7 +32,7 @@ function Atma() {
   const [status, setStatus] = useState('idle'); 
 
   useEffect(() => {
-    const socket = io('http://localhost:5001');
+    const socket = io('https://atma-backend.onrender.com');
     socket.on('atma_status', (newStatus) => {
       setStatus(newStatus);
     });
