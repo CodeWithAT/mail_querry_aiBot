@@ -70,7 +70,7 @@ app.post('/api/process', async (req, res) => {
         io.emit('atma_status', 'ai_processing');
         
         // 🔴 CRITICAL FIX: Changed to "gemini-pro" to prevent 404 crashes
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" }); 
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
         const result = await model.generateContent(prompt);
         const aiResponse = result.response.text();
         console.log('✅ AI Synthesis Complete');
