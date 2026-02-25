@@ -74,17 +74,18 @@ app.post('/api/process', async (req, res) => {
         // --- NODE 2: EMAILJS RELAY (FIREWALL BYPASS) ---
         io.emit('atma_status', 'email_processing');
         
-       const emailData = {
+const emailData = {
             service_id: process.env.EMAILJS_SERVICE_ID,
             template_id: process.env.EMAILJS_TEMPLATE_ID,
             user_id: process.env.EMAILJS_PUBLIC_KEY,
-            accessToken: process.env.EMAILJS_PRIVATE_KEY, // This must be outside template_params
+            accessToken: process.env.EMAILJS_PRIVATE_KEY,
             template_params: {
-                to_email: email,
+                // Ensure this key name matches what you put in the EmailJS dashboard
+                to_email: email, 
                 prompt: prompt.substring(0, 30) + '...',
                 ai_response: aiResponse 
             }
-        };;
+        };
 
         // Sending via API fetch to bypass the SMTP block
         const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
