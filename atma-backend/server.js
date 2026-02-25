@@ -53,6 +53,11 @@ app.post('/api/process', async (req, res) => {
     try {
         console.log(`\n🚀 New Request Initiated for: ${email}`);
 
+        // --- SAFETY CHECK: Warns you if Render keys are missing ---
+        if (!process.env.EMAILJS_SERVICE_ID || !process.env.EMAILJS_TEMPLATE_ID) {
+            console.error("⚠️ WARNING: EmailJS variables are missing! Check your Render Environment tab.");
+        }
+
         // --- NODE 1: AI SYNTHESIS ---
         io.emit('atma_status', 'ai_processing');
         
@@ -106,7 +111,7 @@ app.post('/api/process', async (req, res) => {
         res.status(200).json({ message: 'Process Complete' });
 
     } catch (error) {
-        console.error('❌ Pipeline Error:', error);
+        console.error('❌ Pipeline Error:', error.message);
         io.emit('atma_status', 'idle');
         res.status(500).json({ error: 'System Failure' });
     }
