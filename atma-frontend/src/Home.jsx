@@ -267,7 +267,7 @@ export default function Home() {
         .status-txt { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: #00f2fe; letter-spacing: 0.2em; text-transform: uppercase; }
       `}</style>
 
-      <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}> 
         <div className="galaxy-bg" />
         <div style={{ position: 'absolute', inset: 0, zIndex: 1, background: 'linear-gradient(to bottom, transparent 40%, #010409 100%)', pointerEvents: 'none' }} />
 
