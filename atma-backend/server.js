@@ -14,11 +14,12 @@ const app = express();
 const server = http.createServer(app);
 
 // 1. Setup CORS
-const allowedOrigins = [
-    origin: "*"
-    // "https://mail-querry-ai-bot-iits.vercel.app", // DOUBLE 'R' WALA EXACT MATCH
-    // "http://localhost:5173"
-];
+app.use(cors());
+// const allowedOrigins = [
+//     origin: "*"
+//     // "https://mail-querry-ai-bot-iits.vercel.app", // DOUBLE 'R' WALA EXACT MATCH
+//     // "http://localhost:5173"
+// ];
 
 app.use(cors({
     origin: allowedOrigins,
