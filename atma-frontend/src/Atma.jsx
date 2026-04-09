@@ -31,7 +31,7 @@ const PipelineConnector = ({ isProcessing, isTransferring, isDone, colorClass })
 };
 
 // --- MAIN ATMA DASHBOARD ---
-functn Atma() {
+function Atma() {
   const [status, setStatus] = useState('idle'); 
 
   useEffect(() => {
