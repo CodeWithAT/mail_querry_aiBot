@@ -13,30 +13,26 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// 1. Setup CORS
-app.use(cors());
-// const allowedOrigins = [
-//     origin: "*"
-//     // "https://mail-querry-ai-bot-iits.vercel.app", // DOUBLE 'R' WALA EXACT MATCH
-//     // "http://localhost:5173"
-// ];
-
+// ==========================================
+// 1. Setup CORS (NUCLEAR OPTION: ALLOW ALL)
+// ==========================================
 app.use(cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true
+    origin: "*", 
+    methods: ["GET", "POST"]
 }));
 
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: "*",
         methods: ["GET", "POST"]
     }
 });
 
 app.use(express.json());
 
+// ==========================================
 // 2. Initialize Gemini AI
+// ==========================================
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Watch for the Atma Visualizer connection
@@ -44,7 +40,9 @@ io.on('connection', (socket) => {
     console.log('👁️ Core Atma Visualizer Connected:', socket.id);
 });
 
+// ==========================================
 // 3. The Main Processing Route
+// ==========================================
 app.post('/api/process', async (req, res) => {
     const { prompt, email } = req.body;
 
@@ -55,7 +53,7 @@ app.post('/api/process', async (req, res) => {
     try {
         console.log(`\n🚀 New Request Initiated for: ${email}`);
 
-        // --- SAFETY CHECK: Warns you if Render keys are missing ---
+        // --- SAFETY CHECK ---
         if (!process.env.EMAILJS_SERVICE_ID || !process.env.EMAILJS_TEMPLATE_ID) {
             console.error("⚠️ WARNING: EmailJS variables are missing! Check your Render Environment tab.");
         }
@@ -63,7 +61,6 @@ app.post('/api/process', async (req, res) => {
         // --- NODE 1: AI SYNTHESIS ---
         io.emit('atma_status', 'ai_processing');
         
-        // Keeping model as gemini-2.5-flash as per your request
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
         const result = await model.generateContent(prompt);
         const aiResponse = result.response.text();
@@ -76,20 +73,19 @@ app.post('/api/process', async (req, res) => {
         // --- NODE 2: EMAILJS RELAY (FIREWALL BYPASS) ---
         io.emit('atma_status', 'email_processing');
         
-const emailData = {
+        const emailData = {
             service_id: process.env.EMAILJS_SERVICE_ID,
             template_id: process.env.EMAILJS_TEMPLATE_ID,
             user_id: process.env.EMAILJS_PUBLIC_KEY,
             accessToken: process.env.EMAILJS_PRIVATE_KEY,
             template_params: {
-                // Ensure this key name matches what you put in the EmailJS dashboard
                 to_email: email, 
                 prompt: prompt.substring(0, 30) + '...',
                 ai_response: aiResponse 
             }
         };
 
-        // Sending via API fetch to bypass the SMTP block
+        // Sending via API fetch
         const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
