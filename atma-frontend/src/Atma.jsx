@@ -19,11 +19,11 @@ const PipelineConnector = ({ isProcessing, isTransferring, isDone, colorClass })
 
       {/* Data Transfer Particle */}
       {isTransferring && (
-        <motion.div
+        <motn.div
           className={`absolute z-10 w-3 h-3 rounded-full bg-current shadow-[0_0_15px_currentColor]`}
           initial={{ left: '0%', x: '-50%' }}
           animate={{ left: '100%', x: '-50%' }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+          transitn={{ duratn: 0.8, repeat: Infinity, ease: "linear" }}
         />
       )}
     </div>
@@ -31,11 +31,11 @@ const PipelineConnector = ({ isProcessing, isTransferring, isDone, colorClass })
 };
 
 // --- MAIN ATMA DASHBOARD ---
-function Atma() {
+functn Atma() {
   const [status, setStatus] = useState('idle'); 
 
   useEffect(() => {
-    // Note: Change to your Render URL for production!
+    // Note: Change to your Render URL for productn!
     const socket = io('https://mail-querry-aibot.onrender.com'); 
     socket.on('atma_status', (newStatus) => {
       setStatus(newStatus);
