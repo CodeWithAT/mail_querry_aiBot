@@ -37,7 +37,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ✅ Updated model names (v1beta compatible, 2026)
 const MODEL_PRIORITY = [
-    "gemini-2.0-flash",
+    "gemini-2.5-flash",
     "gemini-2.0-flash-lite",
     "gemini-1.5-flash-latest"
 ];
