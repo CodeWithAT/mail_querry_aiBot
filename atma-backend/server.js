@@ -15,7 +15,7 @@ const server = http.createServer(app);
 
 // 1. Setup CORS
 const allowedOrigins = [
-    "https://mail-querry-ai-bot-iits-git-main-abhaytiwari3003-1893s-projects.vercel.app/",
+    "https://mail-querry-ai-bot-iits.vercel.app/",
     "http://localhost:5173"
 ];
 
