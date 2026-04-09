@@ -16,6 +16,9 @@ build/
 .env.local
 .env.*.local
 
+.env
+atma-backend/.env
+
 # IDE
 .vscode/
 .idea/
@@ -30,6 +33,8 @@ Thumbs.db
 
 # Testing
 coverage/
+
+
 .nyc_output/
 
 # Misc
