@@ -35,12 +35,11 @@ app.use(express.json());
 // ==========================================
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Model fallback priority list
-// gemini-2.5-flash tried first, falls back automatically on failure
+// ✅ Updated model names (v1beta compatible, 2026)
 const MODEL_PRIORITY = [
-    "gemini-2.5-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-8b"
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash-latest"
 ];
 
 // ==========================================
@@ -60,6 +59,13 @@ async function generateWithFallback(prompt) {
                 return { text, modelUsed: modelName };
             } catch (err) {
                 lastError = err;
+
+                // ❌ API key issue — no point retrying any model
+                if (err.message.includes('403') || err.message.includes('leaked') || err.message.includes('API key')) {
+                    console.error('🔑 API Key Error — Please update GEMINI_API_KEY in Render env!');
+                    throw new Error('Invalid or leaked API key. Update GEMINI_API_KEY in environment variables.');
+                }
+
                 const isRetryable =
                     err.message.includes('503') ||
                     err.message.includes('Service Unavailable') ||
@@ -75,7 +81,6 @@ async function generateWithFallback(prompt) {
                     console.log(`⏳ Waiting ${waitMs / 1000}s before retry...`);
                     await new Promise(resolve => setTimeout(resolve, waitMs));
                 } else {
-                    // Non-retryable error or max attempts reached → try next model
                     console.log(`➡️ Moving to next model...`);
                     break;
                 }
@@ -83,7 +88,6 @@ async function generateWithFallback(prompt) {
         }
     }
 
-    // All models failed
     throw new Error(`All AI models failed. Last error: ${lastError?.message || 'Unknown'}`);
 }
 
@@ -122,7 +126,7 @@ app.post('/api/process', async (req, res) => {
         io.emit('atma_status', 'ai_transfer');
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // --- NODE 2: EMAILJS RELAY (FIREWALL BYPASS) ---
+        // --- NODE 2: EMAILJS RELAY ---
         io.emit('atma_status', 'email_processing');
 
         const emailData = {
@@ -137,7 +141,6 @@ app.post('/api/process', async (req, res) => {
             }
         };
 
-        // Sending via API fetch
         const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -155,7 +158,7 @@ app.post('/api/process', async (req, res) => {
         io.emit('atma_status', 'email_transfer');
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // --- NODE 3: SUCCESS TRANSMISSION ---
+        // --- NODE 3: SUCCESS ---
         io.emit('atma_status', 'success');
         setTimeout(() => io.emit('atma_status', 'idle'), 5000);
 
@@ -164,12 +167,12 @@ app.post('/api/process', async (req, res) => {
     } catch (error) {
         console.error('❌ Pipeline Error:', error.message);
         io.emit('atma_status', 'idle');
-        res.status(500).json({ error: 'System Failure' });
+        res.status(500).json({ error: error.message || 'System Failure' });
     }
 });
 
 // ==========================================
-// 4. Health Check Route (optional but useful)
+// 4. Health Check
 // ==========================================
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
