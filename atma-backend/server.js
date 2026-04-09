@@ -15,7 +15,7 @@ const server = http.createServer(app);
 
 // 1. Setup CORS
 const allowedOrigins = [
-    "https://mail-query-ai-bot-iits.vercel.app", // EK 'R' WALA VERCEL LINK
+    "https://mail-querry-ai-bot-iits.vercel.app", // DOUBLE 'R' WALA EXACT MATCH
     "http://localhost:5173"
 ];
 
