@@ -17,7 +17,7 @@ const server = http.createServer(app);
 // 1. Setup CORS (NUCLEAR OPTION: ALLOW ALL)
 // ==========================================
 app.use(cors({
-    origin: "*", 
+    origin: "*",
     methods: ["GET", "POST"]
 }));
 
@@ -35,7 +35,61 @@ app.use(express.json());
 // ==========================================
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Model fallback priority list
+// gemini-2.5-flash tried first, falls back automatically on failure
+const MODEL_PRIORITY = [
+    "gemini-2.5-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b"
+];
+
+// ==========================================
+// Helper: Generate AI response with fallback
+// ==========================================
+async function generateWithFallback(prompt) {
+    let lastError = null;
+
+    for (const modelName of MODEL_PRIORITY) {
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+                console.log(`🤖 Trying model: ${modelName} (Attempt ${attempt})`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent(prompt);
+                const text = result.response.text();
+                console.log(`✅ AI Synthesis Complete using: ${modelName}`);
+                return { text, modelUsed: modelName };
+            } catch (err) {
+                lastError = err;
+                const isRetryable =
+                    err.message.includes('503') ||
+                    err.message.includes('Service Unavailable') ||
+                    err.message.includes('high demand') ||
+                    err.message.includes('overloaded') ||
+                    err.message.includes('429') ||
+                    err.message.includes('RESOURCE_EXHAUSTED');
+
+                console.warn(`⚠️ ${modelName} Attempt ${attempt} failed: ${err.message}`);
+
+                if (isRetryable && attempt < 2) {
+                    const waitMs = 3000 * attempt;
+                    console.log(`⏳ Waiting ${waitMs / 1000}s before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, waitMs));
+                } else {
+                    // Non-retryable error or max attempts reached → try next model
+                    console.log(`➡️ Moving to next model...`);
+                    break;
+                }
+            }
+        }
+    }
+
+    // All models failed
+    throw new Error(`All AI models failed. Last error: ${lastError?.message || 'Unknown'}`);
+}
+
+// ==========================================
 // Watch for the Atma Visualizer connection
+// ==========================================
 io.on('connection', (socket) => {
     console.log('👁️ Core Atma Visualizer Connected:', socket.id);
 });
@@ -58,30 +112,28 @@ app.post('/api/process', async (req, res) => {
             console.error("⚠️ WARNING: EmailJS variables are missing! Check your Render Environment tab.");
         }
 
-        // --- NODE 1: AI SYNTHESIS ---
+        // --- NODE 1: AI SYNTHESIS (with fallback chain) ---
         io.emit('atma_status', 'ai_processing');
-        
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
-        const result = await model.generateContent(prompt);
-        const aiResponse = result.response.text();
-        console.log('✅ AI Synthesis Complete');
+
+        const { text: aiResponse, modelUsed } = await generateWithFallback(prompt);
+        console.log(`📌 Model used for this request: ${modelUsed}`);
 
         // --- CONNECTOR 1: TRANSFERRING ---
         io.emit('atma_status', 'ai_transfer');
-        await new Promise(resolve => setTimeout(resolve, 1500)); 
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
         // --- NODE 2: EMAILJS RELAY (FIREWALL BYPASS) ---
         io.emit('atma_status', 'email_processing');
-        
+
         const emailData = {
             service_id: process.env.EMAILJS_SERVICE_ID,
             template_id: process.env.EMAILJS_TEMPLATE_ID,
             user_id: process.env.EMAILJS_PUBLIC_KEY,
             accessToken: process.env.EMAILJS_PRIVATE_KEY,
             template_params: {
-                to_email: email, 
+                to_email: email,
                 prompt: prompt.substring(0, 30) + '...',
-                ai_response: aiResponse 
+                ai_response: aiResponse
             }
         };
 
@@ -96,12 +148,12 @@ app.post('/api/process', async (req, res) => {
             const errText = await emailResponse.text();
             throw new Error(`EmailJS API Error: ${errText}`);
         }
-        
+
         console.log('✅ Email Successfully Relayed via API');
 
         // --- CONNECTOR 2: TRANSFERRING ---
         io.emit('atma_status', 'email_transfer');
-        await new Promise(resolve => setTimeout(resolve, 1500)); 
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
         // --- NODE 3: SUCCESS TRANSMISSION ---
         io.emit('atma_status', 'success');
@@ -114,6 +166,13 @@ app.post('/api/process', async (req, res) => {
         io.emit('atma_status', 'idle');
         res.status(500).json({ error: 'System Failure' });
     }
+});
+
+// ==========================================
+// 4. Health Check Route (optional but useful)
+// ==========================================
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 const PORT = process.env.PORT || 5001;
