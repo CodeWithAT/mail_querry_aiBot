@@ -36,7 +36,7 @@ function Atma() {
 
   useEffect(() => {
     // Note: Change to your Render URL for productn!
-    const socket = io('https://mail-querry-aibot.onrender.com'); 
+    const socket = io('https://mail-query-aibot.onrender.com'); 
     socket.on('atma_status', (newStatus) => {
       setStatus(newStatus);
     });
